@@ -1,0 +1,50 @@
+---
+apiVersion: "kubeflow.org/v1beta2"
+kind: "PyTorchJob"
+metadata:
+  name: "pytorch-dist-imagnet-nccl"
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        spec:
+          volumes:
+            - name: eastcoastdatasets9-imagenet
+              persistentVolumeClaim:
+                claimName: eastcoastdatasets9-imagenet
+          containers:
+            - name: pytorch
+              image: posi/k8s-pytorch-test:5
+              args: ["--dist-url", "tcp://127.0.0.1:5000", "-a", "resnet50", "--world-size", "2", "--rank", "0", "--multiprocessing-distributed"]
+              resources:
+                limits:
+                nvidia.com/gpu: 1
+              volumeMounts:
+                - mountPath: /home/jovyan/ecd9
+                  name: eastcoastdatasets9-imagenet
+              ports:
+                - containerPort: 5000
+                  name: dist-url
+                  protocol: TCP
+
+    Worker:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        spec:
+          volumes:
+            - name: eastcoastdatasets9-imagenet
+              persistentVolumeClaim:
+                claimName: eastcoastdatasets9-imagenet
+          containers:
+            - name: pytorch
+              image: posi/k8s-pytorch-test:5
+              args: ["--dist-url", "tcp://0.0.0.0:5000", "-a", "resnet50", "--world-size", "2", "--rank", "1", "--multiprocessing-distributed"]
+              volumeMounts:
+                - mountPath: /home/jovyan/ecd9
+                  name: eastcoastdatasets9-imagenet
+              resources:
+                limits:
+                  nvidia.com/gpu: 1

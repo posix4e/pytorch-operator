@@ -11,7 +11,8 @@ spec:
         spec:
           containers:
             - name: pytorch
-              image: gcr.io/<your_project>/pytorch_dist_mnist:latest
+              image: posi/k8s-pytorch-test:1
+
               args: ["--backend", "gloo"]
               # Comment out the below resources to use the CPU.
               resources: 
@@ -24,7 +25,7 @@ spec:
         spec:
           containers: 
             - name: pytorch
-              image: gcr.io/<your_project>/pytorch_dist_mnist:latest
+              image: posi/k8s-pytorch-test:1
               args: ["--backend", "gloo"]
               # Comment out the below resources to use the CPU.
               resources: 
