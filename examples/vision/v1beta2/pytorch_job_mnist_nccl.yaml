@@ -14,20 +14,29 @@ spec:
             - name: eastcoastdatasets9-imagenet
               persistentVolumeClaim:
                 claimName: eastcoastdatasets9-imagenet
+            - name: shm
+              emptyDir:
+                medium: Memory
+                sizeLimit: 2560M
           containers:
             - name: pytorch
-              image: posi/k8s-pytorch-test:5
-              args: ["--dist-url", "tcp://127.0.0.1:5000", "-a", "resnet50", "--world-size", "2", "--rank", "0", "--multiprocessing-distributed"]
+              image: posi/k8s-pytorch-test:horovod-mpi
+              args: ["--dist-backend", "nccl", "--dist-url", "tcp://127.0.0.1:5000", "-a", "resnet50", "--multiprocessing-distributed" , "--world-size", "2", "--rank", "0" ]
               resources:
                 limits:
-                nvidia.com/gpu: 1
+                nvidia.com/gpu: 2
               volumeMounts:
                 - mountPath: /home/jovyan/ecd9
                   name: eastcoastdatasets9-imagenet
+                - mountPath: /dev/shm
+                  name: shm
               ports:
                 - containerPort: 5000
                   name: dist-url
                   protocol: TCP
+              env:
+                - name: NCCL_SOCKET_IFNAME
+                  value: "eth0"
 
     Worker:
       replicas: 1
@@ -38,13 +47,22 @@ spec:
             - name: eastcoastdatasets9-imagenet
               persistentVolumeClaim:
                 claimName: eastcoastdatasets9-imagenet
+            - name: shm
+              emptyDir:
+                medium: Memory
+                sizeLimit: 2560M
           containers:
             - name: pytorch
-              image: posi/k8s-pytorch-test:5
-              args: ["--dist-url", "tcp://0.0.0.0:5000", "-a", "resnet50", "--world-size", "2", "--rank", "1", "--multiprocessing-distributed"]
+              image: posi/k8s-pytorch-test:horovod-mpi
+              args: ["--dist-backend", "nccl", "--dist-url", "tcp://pytorch-dist-imagnet-nccl-master-0:5000", "-a", "resnet50", "--multiprocessing-distributed", "--world-size", "2", "--rank", "1" ]
               volumeMounts:
                 - mountPath: /home/jovyan/ecd9
                   name: eastcoastdatasets9-imagenet
+                - mountPath: /dev/shm
+                  name: shm
               resources:
                 limits:
-                  nvidia.com/gpu: 1
+                  nvidia.com/gpu: 2
+              env:
+                - name: NCCL_SOCKET_IFNAME
+                  value: "eth0"

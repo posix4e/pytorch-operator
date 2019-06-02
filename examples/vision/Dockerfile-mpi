@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 ARG PYTHON_VERSION=3.6
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -47,6 +47,7 @@ RUN pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pytho
 RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org torchvision==0.2.2.post3 tensorboardX==1.6.0
 
 WORKDIR /var
+RUN cat /opt/conda/lib/python3.6/site-packages/torchvision/datasets/folder.py  | sed 's/webp/.JPEG/' > /tmp/o; mv /tmp/o /opt/conda/lib/python3.6/site-packages/torchvision/datasets/folder.py
 ADD mnist.py /var
 ADD imagenet.py /var
 
