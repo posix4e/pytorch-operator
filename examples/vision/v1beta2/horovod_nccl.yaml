@@ -20,11 +20,11 @@ spec:
                 sizeLimit: 2560M
           containers:
             - name: pytorch
-              image: posi/k8s-pytorch-test:horovod-mpi
-              args: ["--dist-backend", "nccl", "--dist-url", "tcp://127.0.0.1:5000", "-a", "resnet50", "--multiprocessing-distributed" , "--world-size", "2", "--rank", "0" ]
+              image: posi/k8s-pytorch-test:horovod-mpi-2
+              args: [ "--dist-backend", "nccl", "--dist-url", "tcp://127.0.0.1:5000", "-a", "resnet50", "--multiprocessing-distributed" , "--world-size", "2", "--rank", "0" ]
               resources:
                 limits:
-                nvidia.com/gpu: 2
+                nvidia.com/gpu: 4
               volumeMounts:
                 - mountPath: /home/jovyan/ecd9
                   name: eastcoastdatasets9-imagenet
@@ -37,6 +37,15 @@ spec:
               env:
                 - name: NCCL_SOCKET_IFNAME
                   value: "eth0"
+                - name: WORLD_SIZE
+                  value: "2"
+                - name: RANK
+                  value: "0"
+                - name: PYTHONUNBUFFERED
+                  value: "0"
+                #- name: NCCL_LL_THRESHOLD
+                #  value: "0"
+
 
     Worker:
       replicas: 1
@@ -53,8 +62,8 @@ spec:
                 sizeLimit: 2560M
           containers:
             - name: pytorch
-              image: posi/k8s-pytorch-test:horovod-mpi
-              args: ["--dist-backend", "nccl", "--dist-url", "tcp://pytorch-dist-imagnet-nccl-master-0:5000", "-a", "resnet50", "--multiprocessing-distributed", "--world-size", "2", "--rank", "1" ]
+              image: posi/k8s-pytorch-test:horovod-mpi-2
+              args: [ "--dist-backend", "nccl", "--dist-url", "tcp://pytorch-dist-imagnet-nccl-master-0:5000", "-a", "resnet50", "--multiprocessing-distributed", "--world-size", "2", "--rank", "1" ]
               volumeMounts:
                 - mountPath: /home/jovyan/ecd9
                   name: eastcoastdatasets9-imagenet
@@ -62,7 +71,15 @@ spec:
                   name: shm
               resources:
                 limits:
-                  nvidia.com/gpu: 2
+                  nvidia.com/gpu: 4
               env:
                 - name: NCCL_SOCKET_IFNAME
                   value: "eth0"
+                - name: WORLD_SIZE
+                  value: "2"
+                - name: RANK
+                  value: "1"
+                - name: PYTHONUNBUFFERED
+                  value: "0"
+               # - name: NCCL_LL_THRESHOLD
+               #   value: "0"
