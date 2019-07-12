@@ -1,8 +1,8 @@
 ---
-apiVersion: "kubeflow.org/v1beta2"
+apiVersion: "kubeflow.org/v1beta1"
 kind: "PyTorchJob"
 metadata:
-  name: "pytorch-dist-imagnet-nccl"
+  name: "pytorch-dist-imagenet-nccl"
 spec:
   pytorchReplicaSpecs:
     Master:
@@ -21,34 +21,24 @@ spec:
           containers:
             - name: pytorch
               image: posi/k8s-pytorch-test:horovod-mpi-2
-              args: [ "--dist-backend", "nccl", "--dist-url", "tcp://127.0.0.1:5000", "-a", "resnet50", "--multiprocessing-distributed" , "--world-size", "2", "--rank", "0" ]
+              entrypoint: ["mpirun", "-n", "1", "--allow-run-as-root", "python", "/var/imagenet.py"]
               resources:
+                requests:
+                  nvidia.com/gpu: 1
                 limits:
-                nvidia.com/gpu: 4
+                  nvidia.com/gpu: 1
               volumeMounts:
                 - mountPath: /home/jovyan/ecd9
                   name: eastcoastdatasets9-imagenet
                 - mountPath: /dev/shm
                   name: shm
               ports:
-                - containerPort: 5000
+                - containerPort: 23456 
                   name: dist-url
                   protocol: TCP
-              env:
-                - name: NCCL_SOCKET_IFNAME
-                  value: "eth0"
-                - name: WORLD_SIZE
-                  value: "2"
-                - name: RANK
-                  value: "0"
-                - name: PYTHONUNBUFFERED
-                  value: "0"
-                #- name: NCCL_LL_THRESHOLD
-                #  value: "0"
-
 
     Worker:
-      replicas: 1
+      replicas: 2
       restartPolicy: OnFailure
       template:
         spec:
@@ -63,23 +53,14 @@ spec:
           containers:
             - name: pytorch
               image: posi/k8s-pytorch-test:horovod-mpi-2
-              args: [ "--dist-backend", "nccl", "--dist-url", "tcp://pytorch-dist-imagnet-nccl-master-0:5000", "-a", "resnet50", "--multiprocessing-distributed", "--world-size", "2", "--rank", "1" ]
+              entrypoint: ["mpirun", "-n", "1", "--allow-run-as-root", "python", "/var/imagenet.py"]
               volumeMounts:
                 - mountPath: /home/jovyan/ecd9
                   name: eastcoastdatasets9-imagenet
                 - mountPath: /dev/shm
                   name: shm
               resources:
+                requests:
+                  nvidia.com/gpu: 1
                 limits:
-                  nvidia.com/gpu: 4
-              env:
-                - name: NCCL_SOCKET_IFNAME
-                  value: "eth0"
-                - name: WORLD_SIZE
-                  value: "2"
-                - name: RANK
-                  value: "1"
-                - name: PYTHONUNBUFFERED
-                  value: "0"
-               # - name: NCCL_LL_THRESHOLD
-               #   value: "0"
+                  nvidia.com/gpu: 1
