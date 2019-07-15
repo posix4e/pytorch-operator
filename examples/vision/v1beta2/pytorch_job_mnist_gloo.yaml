@@ -1,0 +1,67 @@
+apiVersion: "kubeflow.org/v1beta2"
+kind: "PyTorchJob"
+metadata:
+  name: "pytorch-dist-mnist-gloo"
+  namespace: kubeflow
+spec:
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        spec:
+          volumes:
+            - name: eastcoastdatasets9-imagenet
+              azureFile:
+                secretName: azure-secret
+                shareName: imagenet
+                readOnly: false
+            - name: shm
+              emptyDir:
+                medium: Memory
+                sizeLimit: 2560M
+          containers:
+            - name: pytorch
+              image: posi/k8s-pytorch-test:kubeflow-pytorch-dist-3
+              args: ["-a", "alexnet", "--dist-backend", "gloo", "/home/jovyan/ecd9"]
+              # Comment out the below resources to use the CPU.
+              resources: 
+                limits:
+                  nvidia.com/gpu: 1
+                requests:
+                  nvidia.com/gpu: 1
+              volumeMounts:
+                - mountPath: /home/jovyan/ecd9
+                  name: eastcoastdatasets9-imagenet
+                - mountPath: /dev/shm
+                  name: shm
+    Worker:
+      replicas: 3
+      restartPolicy: OnFailure
+      template:
+        spec:
+          volumes:
+            - name: eastcoastdatasets9-imagenet
+              azureFile:
+                secretName: azure-secret
+                shareName: imagenet
+                readOnly: false
+            - name: shm
+              emptyDir:
+                medium: Memory
+                sizeLimit: 2560M
+          containers: 
+            - name: pytorch
+              image: posi/k8s-pytorch-test:kubeflow-pytorch-dist-3
+              args: ["-a", "alexnet", "--dist-backend", "gloo", "/home/jovyan/ecd9"]
+              # Comment out the below resources to use the CPU.
+              resources: 
+                limits:
+                  nvidia.com/gpu: 1
+                requests:
+                  nvidia.com/gpu: 1
+              volumeMounts:
+                - mountPath: /home/jovyan/ecd9
+                  name: eastcoastdatasets9-imagenet
+                - mountPath: /dev/shm
+                  name: shm
