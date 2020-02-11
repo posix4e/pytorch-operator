@@ -10,7 +10,7 @@ This repository contains the specification and implementation of `PyTorchJob` cu
 
 ## Prerequisites
 
-- Kubernetes >= 1.8
+- Kubernetes >= 1.8 <= 1.15
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl)
 
 ## Installing PyTorch Operator
